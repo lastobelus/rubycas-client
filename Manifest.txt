@@ -7,6 +7,7 @@ Rakefile
 init.rb
 lib/casclient.rb
 lib/casclient/client.rb
+lib/casclient/rest_client.rb
 lib/casclient/frameworks/rails/cas_proxy_callback_controller.rb
 lib/casclient/frameworks/rails/filter.rb
 lib/casclient/frameworks/merb/filter.rb
