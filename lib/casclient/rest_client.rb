@@ -3,12 +3,12 @@ module CASClient
     attr_writer :restful_url
     
     def configure(conf)
-      @restful_url = conf[:login_url]
+      @restful_url = conf[:restful_url]
       super
     end
    
     def restful_url
-      @restful_url || (cas_base_url + "/cas/v1/tickets")
+      @restful_url || (cas_base_url + "/v1/tickets")
     end
     
     def get_ticket_granting_ticket_resource(credentials)
