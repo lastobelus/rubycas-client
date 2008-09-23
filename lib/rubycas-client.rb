@@ -20,7 +20,7 @@ if defined?(Merb::Plugins)
   #   :session_extra_attributes_key => :cas_extra_attributes
   #   :logger => cas_logger
   # }
-  Merb::Plugins.config[:"rubycas-client"] = {}
+  Merb::Plugins.config[:"rubycas-client"] ||= {}
   
   # No rake tasks to add.  Uncomment if we add any.
   # Merb::Plugins.add_rakefiles "rubycas-client/merbtasks"
