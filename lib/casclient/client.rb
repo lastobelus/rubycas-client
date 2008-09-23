@@ -184,10 +184,10 @@ module CASClient
     end
     
     # Submits some data to the given URI and returns a Net::HTTPResponse.
-    def submit_data_to_cas(uri, data)
+    def submit_data_to_cas(uri, data, delim=';')
       uri = URI.parse(uri) unless uri.kind_of? URI
       req = Net::HTTP::Post.new(uri.path)
-      req.set_form_data(data, ';')
+      req.set_form_data(data, delim)
       https = Net::HTTP.new(uri.host, uri.port)
       https.use_ssl = (uri.scheme == 'https')
       https.start {|conn| conn.request(req) }
