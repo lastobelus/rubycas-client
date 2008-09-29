@@ -49,13 +49,13 @@ module CASClient
     #               Note that this only works with RubyCAS-Server.
     # back_url:: This satisfies section 2.3.1 of the CAS protocol spec.
     #            See http://www.ja-sig.org/products/cas/overview/protocol
-    def logout_url(service_url = nil, back_url = nil)
+    def logout_url(l_service_url = nil, back_url = nil)
       url = @logout_url || (cas_base_url + "/logout")
-      
-      if service_url || back_url
+      l_service_url ||= self.service_url
+      if l_service_url || back_url
         uri = URI.parse(url)
         h = uri.query ? query_to_hash(uri.query) : {}
-        h['service'] = service_url if service_url
+        h['service'] = l_service_url if l_service_url
         h['url'] = back_url if back_url
         uri.query = hash_to_query(h)
         uri.to_s
