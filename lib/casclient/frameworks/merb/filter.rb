@@ -3,9 +3,10 @@ module CASClient
     module Merb
       module Filter
         attr_reader :client
+
         
         def cas_filter
-          @client ||= CASClient::Client.new(config)
+          @client ||= CASClient::Client.new(CASClient::Frameworks::Merb::Config.config)
           
           service_ticket = read_ticket(self)
           
@@ -99,6 +100,7 @@ module CASClient
         def config
           ::Merb::Plugins.config[:"rubycas-client"]
         end
+
       end
     end
   end
