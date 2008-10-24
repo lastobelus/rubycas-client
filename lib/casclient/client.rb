@@ -2,7 +2,7 @@ module CASClient
   # The client brokers all HTTP transactions with the CAS server.
   class Client
     attr_reader :cas_base_url 
-    attr_reader :log, :username_session_key, :extra_attributes_session_key
+    attr_reader :log, :username_session_key, :extra_attributes_session_key, :service_url
     attr_writer :login_url, :validate_url, :proxy_url, :logout_url, :service_url
     attr_accessor :proxy_callback_url, :proxy_retrieval_url
     
@@ -22,6 +22,7 @@ module CASClient
       @service_url  = conf[:service_url]
       @proxy_callback_url  = conf[:proxy_callback_url]
       @proxy_retrieval_url = conf[:proxy_retrieval_url]
+      @load_ticket_url = conf[:load_ticket_url]
       
       @username_session_key         = conf[:username_session_key] || :cas_user
       @extra_attributes_session_key = conf[:extra_attributes_session_key] || :cas_extra_attributes
@@ -37,6 +38,31 @@ module CASClient
     def validate_url
       @validate_url || (cas_base_url + "/proxyValidate")
     end
+    
+    # calls the loadTicket service of cas server to load a TGT
+    # (retrived by Rest for example) into the browser cookie. This allows an
+    # implementation of autologin on signup:
+    #     1. create user
+    #     2. cas_client.get_ticket_granting_ticket_resource(...credentials...)
+    #     3. redirect to redirect_to load_ticket_url, passing service if you don't
+    #         have one set globally, and passing the ticket from get_ticket_granting_ticket_resource
+    
+    def load_ticket_url(ticket_id, l_service_url = nil, back_url = nil)
+      url = @load_ticket_url || (cas_base_url + "/loadTicket")
+      l_service_url ||= self.service_url
+      if l_service_url || back_url
+        uri = URI.parse(url)
+        h = uri.query ? query_to_hash(uri.query) : {}
+        h['tgt'] = ticket_id.to_s
+        h['service'] = l_service_url.to_s if l_service_url
+        h['url'] = back_url.to_s if back_url
+        uri.query = hash_to_query(h)
+        uri.to_s
+      else
+        url
+      end
+    end
+    
     
     # Returns the CAS server's logout url.
     #
@@ -198,10 +224,11 @@ module CASClient
     end
       
     def hash_to_query(hash)
+      puts "hash_to_query #{hash.inspect}"
       pairs = []
       hash.each do |k, vals|
         vals = [vals] unless vals.kind_of? Array
-        vals.each {|v| pairs << "#{CGI.escape(k)}=#{CGI.escape(v)}"}
+        vals.each {|v| puts "add #{k} => #{v}"; pairs << "#{CGI.escape(k)}=#{CGI.escape(v)}"}
       end
       pairs.join("&")
     end

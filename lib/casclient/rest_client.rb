@@ -31,7 +31,15 @@ module CASClient
       end      
     end
     
-    def get_service_ticket(credentials, service_url)      
+    def ticket_id_from_resource_url(ticket_resource)
+      ticket_resource = ticket_resource.flatten.to_s
+      match = ticket_resource.match(/(TGT[^\/]+cas)/)
+      raise Exception, "could not extract ticket id from #{ticket_resource}" unless match
+      return match[1]
+    end
+    
+    def get_service_ticket(credentials, service_url)  
+      puts("get_service_ticket")    
       tgt_resource = get_ticket_granting_ticket_resource(credentials)
       data = credentials.merge(:service => CGI.escape(service_url)).stringify_keys
       resp = submit_data_to_cas(restful_url, data, '&')      
@@ -40,5 +48,8 @@ module CASClient
   end
 
   class BadRequestException < CASException
+  end
+
+  class BadTicketException < CASException
   end
 end
