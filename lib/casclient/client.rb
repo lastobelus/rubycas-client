@@ -50,17 +50,13 @@ module CASClient
     def load_ticket_url(ticket_id, l_service_url = nil, back_url = nil)
       url = @load_ticket_url || (cas_base_url + "/loadTicket")
       l_service_url ||= self.service_url
-      if l_service_url || back_url
-        uri = URI.parse(url)
-        h = uri.query ? query_to_hash(uri.query) : {}
-        h['tgt'] = ticket_id.to_s
-        h['service'] = l_service_url.to_s if l_service_url
-        h['url'] = back_url.to_s if back_url
-        uri.query = hash_to_query(h)
-        uri.to_s
-      else
-        url
-      end
+      uri = URI.parse(url)
+      h = uri.query ? query_to_hash(uri.query) : {}
+      h['tgt'] = ticket_id.to_s
+      h['service'] = l_service_url.to_s if l_service_url
+      h['url'] = back_url.to_s if back_url
+      uri.query = hash_to_query(h)
+      uri.to_s
     end
     
     
@@ -224,11 +220,10 @@ module CASClient
     end
       
     def hash_to_query(hash)
-      puts "hash_to_query #{hash.inspect}"
       pairs = []
       hash.each do |k, vals|
         vals = [vals] unless vals.kind_of? Array
-        vals.each {|v| puts "add #{k} => #{v}"; pairs << "#{CGI.escape(k)}=#{CGI.escape(v)}"}
+        vals.each {|v| pairs << "#{CGI.escape(k)}=#{CGI.escape(v)}"}
       end
       pairs.join("&")
     end
