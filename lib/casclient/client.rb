@@ -118,7 +118,13 @@ module CASClient
       res = submit_data_to_cas(login_url, data)
       CASClient::LoginResponse.new(res)
     end
-  
+    
+    def http_connection(uri)
+      https = Net::HTTP.new(uri.host, uri.port)
+      https.use_ssl = (uri.scheme == 'https')
+      https
+    end
+    
     # Requests a login ticket from the CAS server for use in a login request;
     # returns a LoginTicket object.
     #
@@ -126,8 +132,7 @@ module CASClient
     # tickets in this manner is not part of the official CAS spec.
     def request_login_ticket
       uri = URI.parse(login_url+'Ticket')
-      https = Net::HTTP.new(uri.host, uri.port)
-      https.use_ssl = (uri.scheme == 'https')
+      https = http_connection(uri)
       res = https.post(uri.path, ';')
       
       raise CASException, res.body unless res.kind_of? Net::HTTPSuccess
@@ -163,12 +168,8 @@ module CASClient
       
       log.debug "Retrieving PGT for PGT IOU #{pgt_iou.inspect} from #{retrieve_url.inspect}"
       
-#      https = Net::HTTP.new(uri.host, uri.port)
-#      https.use_ssl = (uri.scheme == 'https')
-#      res = https.post(uri.path, ';')
       uri = URI.parse(uri) unless uri.kind_of? URI
-      https = Net::HTTP.new(uri.host, uri.port)
-      https.use_ssl = (uri.scheme == 'https')
+      https = http_connection(uri)
       res = https.start do |conn|
         conn.get("#{uri.path}?#{uri.query}")
       end
@@ -192,8 +193,7 @@ module CASClient
       log.debug "Requesting CAS response form URI #{uri.inspect}"
       
       uri = URI.parse(uri) unless uri.kind_of? URI
-      https = Net::HTTP.new(uri.host, uri.port)
-      https.use_ssl = (uri.scheme == 'https')
+      https = http_connection(uri)
       raw_res = https.start do |conn|
         conn.get("#{uri.path}?#{uri.query}")
       end
@@ -210,8 +210,7 @@ module CASClient
       uri = URI.parse(uri) unless uri.kind_of? URI
       req = Net::HTTP::Post.new(uri.path)
       req.set_form_data(data, delim)
-      https = Net::HTTP.new(uri.host, uri.port)
-      https.use_ssl = (uri.scheme == 'https')
+      https = http_connection(uri)
       https.start {|conn| conn.request(req) }
     end
     
