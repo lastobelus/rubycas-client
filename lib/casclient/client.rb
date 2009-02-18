@@ -1,8 +1,7 @@
 module CASClient
   # The client brokers all HTTP transactions with the CAS server.
   class Client
-    attr_reader :cas_base_url 
-    attr_reader :log, :username_session_key, :extra_attributes_session_key, :service_url
+    attr_reader :cas_base_url, :log, :username_session_key, :extra_attributes_session_key, :service_url, :verify_ssl_certificate
     attr_writer :login_url, :validate_url, :proxy_url, :logout_url, :service_url
     attr_accessor :proxy_callback_url, :proxy_retrieval_url
     
@@ -23,7 +22,7 @@ module CASClient
       @proxy_callback_url  = conf[:proxy_callback_url]
       @proxy_retrieval_url = conf[:proxy_retrieval_url]
       @load_ticket_url = conf[:load_ticket_url]
-      
+      @verify_ssl_certificate = conf[:verify_ssl_certificate].nil? ? true : conf[:verify_ssl_certificate]
       @username_session_key         = conf[:username_session_key] || :cas_user
       @extra_attributes_session_key = conf[:extra_attributes_session_key] || :cas_extra_attributes
       
@@ -122,6 +121,17 @@ module CASClient
     def http_connection(uri)
       https = Net::HTTP.new(uri.host, uri.port)
       https.use_ssl = (uri.scheme == 'https')
+      https.enable_post_connection_check = true
+      store = OpenSSL::X509::Store.new
+      store.set_default_paths
+      https.cert_store = store
+      if verify_ssl_certificate
+        log.debug "casclient will verify_ssl_certificate"
+        https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      else
+        log.debug "casclient will NOT verify_ssl_certificate"
+        https.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
       https
     end
     
