@@ -1,7 +1,8 @@
 module CASClient
   # The client brokers all HTTP transactions with the CAS server.
   class Client
-    attr_reader :cas_base_url, :log, :username_session_key, :extra_attributes_session_key, :service_url, :verify_ssl_certificate
+    attr_reader :cas_base_url, :log, :username_session_key, :extra_attributes_session_key, :service_url
+    attr_reader :verify_ssl_certificate, :ssl_key_path, :ssl_cert_path, :ssl_ca_file_path
     attr_writer :login_url, :validate_url, :proxy_url, :logout_url, :service_url
     attr_accessor :proxy_callback_url, :proxy_retrieval_url
     
@@ -25,7 +26,9 @@ module CASClient
       @verify_ssl_certificate = conf[:verify_ssl_certificate].nil? ? true : conf[:verify_ssl_certificate]
       @username_session_key         = conf[:username_session_key] || :cas_user
       @extra_attributes_session_key = conf[:extra_attributes_session_key] || :cas_extra_attributes
-      
+      @ssl_cert_path = conf[:ssl_cert_path]
+      @ssl_key_path = conf[:ssl_key_path]
+      @ssl_ca_file_path = conf[:ssl_ca_file_path]
       @log = CASClient::LoggerWrapper.new
       @log.set_real_logger(conf[:logger]) if conf[:logger]
     end
@@ -121,10 +124,24 @@ module CASClient
     def http_connection(uri)
       https = Net::HTTP.new(uri.host, uri.port)
       https.use_ssl = (uri.scheme == 'https')
-      https.enable_post_connection_check = true
+      https.enable_post_connection_check = true if defined?(http.enable_post_connection_check)
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       https.cert_store = store
+      
+      # if your setup doesn't have the cacerts in the default place, you can pass a path to cacert.pem, which you can get at http://curl.haxx.se/ca/cacert.pem
+      https.ca_file = ssl_ca_file_path unless ssl_ca_file_path.blank?
+      unless ssl_cert_path.blank?
+        https.cert = OpenSSL::X509::Certificate.new(File.read(ssl_cert_path))
+      end
+      unless ssl_key_path.blank?
+        begin
+          https.key = OpenSSL::PKey::DSA.new(File.read(ssl_key_path))
+        rescue OpenSSL::PKey::DSAError
+          https.key = OpenSSL::PKey::RSA.new(File.read(ssl_key_path))
+        end
+      end
+      
       if verify_ssl_certificate
         log.debug "casclient will verify_ssl_certificate"
         https.verify_mode = OpenSSL::SSL::VERIFY_PEER
