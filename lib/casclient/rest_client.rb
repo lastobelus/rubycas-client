@@ -33,7 +33,7 @@ module CASClient
     
     def ticket_id_from_resource_url(*ticket_resource)
       ticket_resource = ticket_resource.flatten.to_s
-      match = ticket_resource.match(/(TGT[^\/]+cas)/)
+      match = ticket_resource.match(/(TGT-\d+-.+-.+)/)
       raise Exception, "could not extract ticket id from #{ticket_resource}" unless match
       return match[1]
     end
