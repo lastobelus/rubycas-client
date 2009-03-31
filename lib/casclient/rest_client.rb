@@ -24,10 +24,10 @@ module CASClient
         return nil
       when Net::HTTPBadRequest then
         log.error("RestClient.get_ticket_granting_ticket_resource: CAS server returned BadRequest")
-        raise BadRequestException, res.body
+        raise BadRequestException, resp.body
       else
         log.warn "RestClient.get_ticket_granting_ticket_resource: an unexpected error occurred #{resp}"
-        raise CASException, res.inspect
+        raise CASException, resp.inspect
       end      
     end
     
